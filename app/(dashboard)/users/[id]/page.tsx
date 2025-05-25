@@ -1,9 +1,12 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { Avatar, AvatarFallback, AvatarImage } from "../../../../components/ui/avatar";
+import {
+  Avatar,
+  AvatarFallback,
+  AvatarImage,
+} from "../../../../components/ui/avatar";
 import { Badge } from "../../../../components/ui/badge";
 import {
   Card,
@@ -12,20 +15,34 @@ import {
   CardHeader,
   CardTitle,
 } from "../../../../components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../../../components/ui/tabs";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "../../../../components/ui/tabs";
 import { format } from "date-fns";
 import { BlockUserDialog } from "../../../../components/users/block-user-dialog";
 import { Button } from "../../../../components/ui/button";
+import { toast } from "sonner"; // Using Sonner instead of the deprecated toast
 import { User } from "../../../../types/user";
 import { Transaction } from "../../../../types/transaction";
 import { Withdrawal } from "../../../../types/withdrawal";
-import { transactionsApi, usersApi, withdrawalsApi } from "../../../../lib/api";
+import { usersApi } from "../../../../lib/api";
+
+// Define the expected response type from the API
+interface UserDetailResponse {
+  user: User;
+  transactions?: Transaction[];
+  withdrawals?: Withdrawal[];
+  devices?: any[];
+  referral_count?: number;
+}
 
 export default function UserDetailPage() {
   const params = useParams();
   const userId = Number(params.id);
   const router = useRouter();
-  const { toast } = useToast();
 
   const [user, setUser] = useState<User | null>(null);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
@@ -33,38 +50,29 @@ export default function UserDetailPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Fetch user data
   useEffect(() => {
     const fetchUserData = async () => {
       try {
         setIsLoading(true);
 
-        // Fetch user details
-        const userData = await usersApi.getById(userId);
-        setUser(userData);
+        // Add type assertion here to fix the type issue
+        const userData = (await usersApi.getById(userId)) as UserDetailResponse;
+        setUser(userData.user);
 
-        // Fetch user transactions
-        // Note: In a real app, you'd want to fetch this data from user-specific endpoints
-        const transactionsData = await transactionsApi.getAll({
-          user_id: userId,
-        });
-        setTransactions(transactionsData);
+        // Set transactions and withdrawals from the user data
+        if (userData.transactions) {
+          setTransactions(userData.transactions);
+        }
 
-        // Fetch user withdrawals
-        const withdrawalsData = await withdrawalsApi.getAll({
-          user_id: userId,
-        });
-        setWithdrawals(withdrawalsData);
+        if (userData.withdrawals) {
+          setWithdrawals(userData.withdrawals);
+        }
 
         setError(null);
       } catch (error) {
         console.error("Error fetching user data:", error);
         setError("Failed to load user data");
-        toast({
-          title: "Error",
-          description: "Failed to load user data",
-          variant: "destructive",
-        });
+        toast.error("Failed to load user data");
       } finally {
         setIsLoading(false);
       }
@@ -73,7 +81,7 @@ export default function UserDetailPage() {
     if (userId) {
       fetchUserData();
     }
-  }, [userId, toast]);
+  }, [userId]);
 
   // Handle user block/unblock
   const handleBlockStatusChange = async (
@@ -83,16 +91,10 @@ export default function UserDetailPage() {
     try {
       if (isBlocked) {
         await usersApi.unblock(userId);
-        toast({
-          title: "Success",
-          description: "User has been unblocked",
-        });
+        toast.success("User has been unblocked");
       } else {
         await usersApi.block(userId);
-        toast({
-          title: "Success",
-          description: "User has been blocked",
-        });
+        toast.success("User has been blocked");
       }
 
       // Update user in state
@@ -101,11 +103,7 @@ export default function UserDetailPage() {
       }
     } catch (error) {
       console.error("Error updating user block status:", error);
-      toast({
-        title: "Error",
-        description: `Failed to ${isBlocked ? "unblock" : "block"} user`,
-        variant: "destructive",
-      });
+      toast.error(`Failed to ${isBlocked ? "unblock" : "block"} user`);
     }
   };
 

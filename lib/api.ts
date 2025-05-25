@@ -1,5 +1,6 @@
 import axios, { AxiosInstance, AxiosResponse } from 'axios';
 import { ApiResponse, PaginationParams } from '../types/api';
+import { LoginResponse } from '@/types/auth';
 
 // Create axios instance
 const apiClient: AxiosInstance = axios.create({
@@ -96,9 +97,9 @@ const del = async <T>(url: string): Promise<T> => {
 
 // Auth
 export const authApi = {
-  login: (email: string, password: string) => 
-    post('/auth/login', { email, password }),
-};
+    login: (email: string, password: string): Promise<LoginResponse> => 
+      post<LoginResponse>('/auth/login', { email, password }),
+  };
 
 // Users
 export const usersApi = {

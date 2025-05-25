@@ -9,11 +9,12 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Overview } from "@/components/dashboard/overview";
 import { RecentUsers } from "@/components/dashboard/recent-users";
 import { RecentWithdrawals } from "@/components/dashboard/recent-withdrawals";
 import { KYCStats } from "@/components/dashboard/kyc-stats";
-import { dashboardApi } from "@/lib/api";
+import { dashboardApi } from "../../lib/api";
+import { Overview } from "@/components/dashboard/overview-cards";
+import { toast } from "sonner"; // Import toast from sonner if needed for error handling
 
 // Dashboard stats interface
 interface DashboardStats {
@@ -38,12 +39,15 @@ export default function DashboardPage() {
     const fetchDashboardStats = async () => {
       try {
         setIsLoading(true);
-        const data = await dashboardApi.getStats();
+        // Add type assertion here to fix potential type issues
+        const data = (await dashboardApi.getStats()) as DashboardStats;
         setStats(data);
         setError(null);
       } catch (error) {
         console.error("Error fetching dashboard stats:", error);
         setError("Failed to load dashboard data");
+        // Use sonner toast for error notification if desired
+        toast.error("Failed to load dashboard data");
       } finally {
         setIsLoading(false);
       }

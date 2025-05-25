@@ -1,6 +1,7 @@
 import NextAuth from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
 import { authApi } from '../../../../lib/api';
+import { LoginResponse } from '../../../../types/auth';
 
 const handler = NextAuth({
   providers: [
@@ -16,12 +17,13 @@ const handler = NextAuth({
         }
 
         try {
-          const response = await authApi.login(
+          // Type the response properly using the LoginResponse type
+          const response: LoginResponse = await authApi.login(
             credentials.email,
             credentials.password
           );
           
-          // Return user data with token
+          // Now TypeScript knows the structure of the response
           return {
             id: String(response.user.id),
             email: response.user.email,

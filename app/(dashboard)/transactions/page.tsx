@@ -12,6 +12,7 @@ import { TransactionsTable } from "../../../components/transactions/transactions
 import { TransactionTypeFilter } from "../../../components/transactions/transaction-type-filter";
 import { Transaction, TransactionType } from "../../../types/transaction";
 import { transactionsApi } from "../../../lib/api";
+import { toast } from "sonner";
 
 export default function TransactionsPage() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
@@ -21,32 +22,28 @@ export default function TransactionsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState<TransactionType | "all">("all");
-  // const { toast } = useToast();
 
   // Fetch transactions data
   useEffect(() => {
     const fetchTransactions = async () => {
       try {
         setIsLoading(true);
-        const data = await transactionsApi.getAll();
+        // Type assertion using your existing Transaction[] type
+        const data = (await transactionsApi.getAll()) as Transaction[];
         setTransactions(data);
         setFilteredTransactions(data);
         setError(null);
       } catch (error) {
         console.error("Error fetching transactions:", error);
         setError("Failed to load transactions data");
-        // toast({
-        //   title: "Error",
-        //   description: "Failed to load transactions data",
-        //   variant: "destructive",
-        // });
+        toast.error("Failed to load transactions data");
       } finally {
         setIsLoading(false);
       }
     };
 
     fetchTransactions();
-  }, [toast]);
+  }, []); // Removed toast dependency
 
   // Handle filter change
   const handleFilterChange = (type: TransactionType | "all") => {

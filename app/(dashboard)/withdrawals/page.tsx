@@ -1,10 +1,23 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../../../components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "../../../components/ui/card";
 import { WithdrawalsTable } from "../../../components/withdrawals/withdrawals-table";
 import { Withdrawal } from "../../../types/withdrawal";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../../components/ui/tabs";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "../../../components/ui/tabs";
+import { withdrawalsApi } from "@/lib/api";
+import { toast } from "sonner"; // Import toast from sonner
 
 export default function WithdrawalsPage() {
   const [pendingWithdrawals, setPendingWithdrawals] = useState<Withdrawal[]>(
@@ -18,7 +31,6 @@ export default function WithdrawalsPage() {
   );
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const { toast } = useToast();
 
   // Fetch withdrawals data
   useEffect(() => {
@@ -26,14 +38,16 @@ export default function WithdrawalsPage() {
       try {
         setIsLoading(true);
 
-        // Fetch withdrawals by status
-        const pendingData = await withdrawalsApi.getAll({ status: "pending" });
-        const approvedData = await withdrawalsApi.getAll({
+        // Fetch withdrawals by status with type assertions
+        const pendingData = (await withdrawalsApi.getAll({
+          status: "pending",
+        })) as Withdrawal[];
+        const approvedData = (await withdrawalsApi.getAll({
           status: "approved",
-        });
-        const rejectedData = await withdrawalsApi.getAll({
+        })) as Withdrawal[];
+        const rejectedData = (await withdrawalsApi.getAll({
           status: "rejected",
-        });
+        })) as Withdrawal[];
 
         setPendingWithdrawals(pendingData);
         setApprovedWithdrawals(approvedData);
@@ -43,18 +57,14 @@ export default function WithdrawalsPage() {
       } catch (error) {
         console.error("Error fetching withdrawals:", error);
         setError("Failed to load withdrawals data");
-        toast({
-          title: "Error",
-          description: "Failed to load withdrawals data",
-          variant: "destructive",
-        });
+        toast.error("Failed to load withdrawals data");
       } finally {
         setIsLoading(false);
       }
     };
 
     fetchWithdrawals();
-  }, [toast]);
+  }, []); // Removed toast from dependency array
 
   // Handle withdrawal approval
   const handleApproveWithdrawal = async (id: number, adminNote: string) => {
@@ -71,17 +81,10 @@ export default function WithdrawalsPage() {
         ]);
       }
 
-      toast({
-        title: "Success",
-        description: "Withdrawal has been approved",
-      });
+      toast.success("Withdrawal has been approved");
     } catch (error) {
       console.error("Error approving withdrawal:", error);
-      toast({
-        title: "Error",
-        description: "Failed to approve withdrawal",
-        variant: "destructive",
-      });
+      toast.error("Failed to approve withdrawal");
     }
   };
 
@@ -100,17 +103,10 @@ export default function WithdrawalsPage() {
         ]);
       }
 
-      toast({
-        title: "Success",
-        description: "Withdrawal has been rejected",
-      });
+      toast.success("Withdrawal has been rejected");
     } catch (error) {
       console.error("Error rejecting withdrawal:", error);
-      toast({
-        title: "Error",
-        description: "Failed to reject withdrawal",
-        variant: "destructive",
-      });
+      toast.error("Failed to reject withdrawal");
     }
   };
 
